@@ -5,6 +5,7 @@ import java.util.*;
 public class AppointmentServer {
 
     private static final int PORT = 5000;
+    private static int numLines = 0;
     private static final String FILE_NAME = "appointments.txt";
     private static List<String> appointments = new ArrayList<>();
 
@@ -30,21 +31,27 @@ public class AppointmentServer {
                     socket.getOutputStream(), true);
 
             clearScreen(out);
+            numLines += 1;
             out.println("=== Appointment Manager ===");
 
             boolean running = true;
 
             while (running) {
-
-                out.println("\n1. Add Appointment");
-                out.println("2. View Appointments");
-                out.println("3. Delete Appointment");
-                out.println("4. Exit");
-                out.print("Choice: ");
+                numLines += 2;
+                moveCursor(out, numLines, 0);
+                out.write("\n1. Add Appointment");
+                moveCursor(out, ++numLines, 0);
+                out.write("\n2. View Appointments");
+                moveCursor(out, ++numLines, 0);
+                out.write("\n3. Delete Appointment");
+                moveCursor(out, ++numLines, 0);
+                out.write("\n4. Exit");
+                moveCursor(out, ++numLines, 0);
+                out.write("\nChoice: ");
                 out.flush();
 
                 String choice = readAndEcho(in, out);
-
+                clearScreen(out);
                 if (choice.equals("1")) {
                     addAppointment(in, out);
                 }
@@ -84,19 +91,19 @@ public class AppointmentServer {
 
     private static void addAppointment(BufferedReader in, PrintWriter out)
             throws IOException {
-
+        clearScreen(out);
         out.print("Date (YYYY-MM-DD): ");
         out.flush();
         String date = readAndEcho(in, out);
-
+        clearScreen(out);
         out.print("Time (HH:MM): ");
         out.flush();
         String time = readAndEcho(in, out);
-
+        clearScreen(out);
         out.print("With whom: ");
         out.flush();
         String person = readAndEcho(in, out);
-
+        clearScreen(out);
         out.print("Description: ");
         out.flush();
         String desc = readAndEcho(in, out);
@@ -104,22 +111,29 @@ public class AppointmentServer {
         String entry = date + "|" + time + "|" + person + "|" + desc;
         appointments.add(entry);
         saveToFile();
-
-        out.println("Appointment added.");
+        clearScreen(out);
+        numLines += 1;
+        moveCursor(out, numLines, 0);
+        out.write("Appointment added.");
     }
 
     private static void viewAppointments(PrintWriter out) {
-
-        out.println("\n--- Appointments ---");
+        numLines += 1;
+        out.write("\n--- Appointments ---");
 
         if (appointments.isEmpty()) {
-            out.println("No appointments found.");
+            numLines += 1;
+            moveCursor(out, numLines, 0);
+            out.write("No appointments found.");
         }
         else {
             for (int i = 0; i < appointments.size(); i++) {
-                out.println((i + 1) + ". " + appointments.get(i));
+                numLines += 1;
+                moveCursor(out, numLines, 0);
+                out.write((i + 1) + ". " + appointments.get(i));
             }
         }
+        out.flush();
     }
 
     private static void deleteAppointment(BufferedReader in, PrintWriter out)
@@ -129,8 +143,9 @@ public class AppointmentServer {
 
         if (appointments.isEmpty())
             return;
-
-        out.print("Enter number to delete: ");
+        numLines += 2;
+        moveCursor(out, numLines, 0);
+        out.write("Enter number to delete: ");
         out.flush();
         String input = readAndEcho(in, out);
 
@@ -140,15 +155,16 @@ public class AppointmentServer {
             if (index >= 0 && index < appointments.size()) {
                 appointments.remove(index);
                 saveToFile();
-                out.println("Deleted.");
+                out.write("Deleted.");
             }
             else {
-                out.println("Invalid number.");
+                out.write("Invalid number.");
             }
         }
         catch (NumberFormatException e) {
-            out.println("Invalid input.");
+            out.write("Invalid input.");
         }
+        out.flush();
     }
 
     private static void loadFromFile() {
@@ -191,8 +207,15 @@ public class AppointmentServer {
     }
 
     private static void clearScreen(PrintWriter out) {
+        numLines = 0;
         out.print("\033[2J");
         out.print("\033[H");
+        out.flush();
+    }
+
+    private static void moveCursor(PrintWriter out, int row, int col) {
+        out.write(27);
+        out.write("[" + row + ";" + col + "H");
         out.flush();
     }
 }
