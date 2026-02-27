@@ -1,6 +1,7 @@
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class AppointmentServer {
 
@@ -45,7 +46,9 @@ public class AppointmentServer {
                 moveCursor(out, ++numLines, 0);
                 out.write("\n3. Delete Appointment");
                 moveCursor(out, ++numLines, 0);
-                out.write("\n4. Exit");
+                out.write("\n4. Search Appointments");
+                moveCursor(out, ++numLines, 0);
+                out.write("\n5. Exit");
                 moveCursor(out, ++numLines, 0);
                 out.write("\nChoice: ");
                 out.flush();
@@ -62,6 +65,9 @@ public class AppointmentServer {
                     deleteAppointment(in, out);
                 }
                 else if (choice.equals("4")) {
+                    searchAppointments(in, out);
+                }
+                else if (choice.equals("5")) {
                     running = false;
                 }
                 else {
@@ -163,6 +169,37 @@ public class AppointmentServer {
         }
         catch (NumberFormatException e) {
             out.write("Invalid input.");
+        }
+        out.flush();
+    }
+
+    private static void searchAppointments(BufferedReader in, PrintWriter out)
+            throws IOException {
+
+        clearScreen(out);
+        out.print("Enter search term: ");
+        out.flush();
+        String term = readAndEcho(in, out);
+
+        numLines += 1;
+        moveCursor(out, numLines, 0);
+        out.write("\n--- Search Results ---");
+
+        int count = 0;
+        Pattern pattern = Pattern.compile(Pattern.quote(term), Pattern.CASE_INSENSITIVE);
+        for (String entry : appointments) {
+            if (pattern.matcher(entry).find()) {
+                numLines += 1;
+                moveCursor(out, numLines, 0);
+                out.write(entry);
+                count++;
+            }
+        }
+
+        if (count == 0) {
+            numLines += 1;
+            moveCursor(out, numLines, 0);
+            out.write("No matching appointments found.");
         }
         out.flush();
     }
