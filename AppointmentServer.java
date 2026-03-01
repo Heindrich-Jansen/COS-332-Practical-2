@@ -9,6 +9,11 @@ public class AppointmentServer {
     private static int numLines = 0;
     private static final String FILE_NAME = "appointments.txt";
     private static List<String> appointments = new ArrayList<>();
+    private static final Pattern DATE_PATTERN =
+        Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
+
+    private static final Pattern TIME_PATTERN =
+        Pattern.compile("^([01]\\d|2[0-3]):[0-5]\\d$");
 
     public static void main(String[] args) throws IOException {
 
@@ -54,6 +59,13 @@ public class AppointmentServer {
                 out.flush();
 
                 String choice = readAndEcho(in, out);
+
+                if (!choice.matches("[1-5]")) {
+                    clearScreen(out);
+                    out.println("Invalid option. Please enter 1-5.");
+                    continue;
+                }
+
                 clearScreen(out);
                 if (choice.equals("1")) {
                     addAppointment(in, out);
@@ -97,30 +109,70 @@ public class AppointmentServer {
 
     private static void addAppointment(BufferedReader in, PrintWriter out)
             throws IOException {
-        clearScreen(out);
-        out.print("Date (YYYY-MM-DD): ");
-        out.flush();
-        String date = readAndEcho(in, out);
-        clearScreen(out);
-        out.print("Time (HH:MM): ");
-        out.flush();
-        String time = readAndEcho(in, out);
-        clearScreen(out);
-        out.print("With whom: ");
-        out.flush();
-        String person = readAndEcho(in, out);
-        clearScreen(out);
-        out.print("Description: ");
-        out.flush();
-        String desc = readAndEcho(in, out);
+
+        String date;
+        String time;
+        String person;
+        String desc;
+
+        // DATE VALIDATION
+        while (true) {
+            clearScreen(out);
+            out.print("Date (YYYY-MM-DD): ");
+            out.flush();
+            date = readAndEcho(in, out);
+
+            if (DATE_PATTERN.matcher(date).matches())
+                break;
+
+            out.println("Invalid date format. Try again.");
+        }
+
+        // TIME VALIDATION
+        while (true) {
+            clearScreen(out);
+            out.print("Time (HH:MM): ");
+            out.flush();
+            time = readAndEcho(in, out);
+
+            if (TIME_PATTERN.matcher(time).matches())
+                break;
+
+            out.println("Invalid time format. Use 24-hour format.");
+        }
+
+        // PERSON VALIDATION
+        while (true) {
+            clearScreen(out);
+            out.print("With whom: ");
+            out.flush();
+            person = readAndEcho(in, out);
+
+            if (!person.trim().isEmpty())
+                break;
+
+            out.println("Name cannot be empty.");
+        }
+
+        // DESCRIPTION VALIDATION
+        while (true) {
+            clearScreen(out);
+            out.print("Description: ");
+            out.flush();
+            desc = readAndEcho(in, out);
+
+            if (!desc.trim().isEmpty())
+                break;
+
+            out.println("Description cannot be empty.");
+        }
 
         String entry = date + "|" + time + "|" + person + "|" + desc;
         appointments.add(entry);
         saveToFile();
+
         clearScreen(out);
-        numLines += 1;
-        moveCursor(out, numLines, 0);
-        out.write("Appointment added.");
+        out.println("Appointment added successfully.");
     }
 
     private static void viewAppointments(PrintWriter out) {
@@ -156,6 +208,12 @@ public class AppointmentServer {
         String input = readAndEcho(in, out);
 
         try {
+            if (!input.matches("\\d+")) {
+                out.write("Please enter a valid number.");
+                out.flush();
+                return;
+            }
+
             int index = Integer.parseInt(input) - 1;
 
             if (index >= 0 && index < appointments.size()) {
