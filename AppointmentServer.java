@@ -1,4 +1,5 @@
 import java.net.*;
+import java.text.DateFormat;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -222,6 +223,7 @@ public class AppointmentServer {
     }
 
     private static void viewAppointments(PrintWriter out) {
+        appointments.sort(Comparator.comparing(s -> s.split("\\|")[0] + s.split("\\|")[1]));
         numLines += 1;
         moveCursor(out, numLines, 33);
         out.write(ANSI_BLUE + "\n--- Appointments ---");
@@ -233,6 +235,19 @@ public class AppointmentServer {
         }
         else {
             for (int i = 0; i < appointments.size(); i++) {
+                if (i > 0) {
+                    String prevDate = appointments.get(i - 1).split("\\|")[0];
+                    Date todayDate = new Date();
+                    DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT, Locale.ENGLISH);
+                    String today = df.format(todayDate);
+                    today = "20" + today.split("/")[2] + "-" + (today.split("/")[0].length() == 1 ? "0" + today.split("/")[0] : today.split("/")[0]) + "-" + (today.split("/")[1].length() == 1 ? "0" + today.split("/")[1] : today.split("/")[1]);
+                    String currDate = appointments.get(i).split("\\|")[0];
+                    if (today.compareTo(currDate) <= 0 && today.compareTo(prevDate) > 0) {
+                        numLines += 1;
+                        moveCursor(out, numLines, 25);
+                        out.write(ANSI_BLUE + "----Upcomming appointments----");
+                    }
+                }
                 numLines += 1;
                 moveCursor(out, numLines, 20);
                 out.write(ANSI_RESET + (i + 1) + ". " + appointments.get(i));
@@ -256,6 +271,9 @@ public class AppointmentServer {
 
         try {
             if (!input.matches("\\d+")) {
+                clearScreen(out);
+                numLines += 1;
+                moveCursor(out, numLines, 0);
                 out.write(ANSI_RED + "Please enter a valid number.");
                 out.flush();
                 return;
@@ -266,6 +284,9 @@ public class AppointmentServer {
             if (index >= 0 && index < appointments.size()) {
                 appointments.remove(index);
                 saveToFile();
+                clearScreen(out);
+                numLines += 1;
+                moveCursor(out, numLines, 0);
                 out.write(ANSI_GREEN + "Deleted.");
             }
             else {
